@@ -6,9 +6,9 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 
 **Choix des méthodes à analyser** :
 
-- `METHOD_1` TEMPS
-- `METHOD_2` TEMPS
-- `METHOD_3` TEMPS
+- `get Meta` 4,01 s
+- `get Metas` 4.21 s
+- `get Reviews` 9.23 s
 
 
 
