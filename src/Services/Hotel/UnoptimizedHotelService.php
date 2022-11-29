@@ -113,10 +113,18 @@ class UnoptimizedHotelService extends AbstractHotelService {
     $reviews = array_map( function ( $review ) {
       return intval( $review['meta_value'] );
     }, $reviews );
-    
+
+      $moyennestmt=$this->getDB()->prepare("SELECT round(AVG(meta_value))  FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'");
+      $moyennestmt->execute( [ 'hotelId' => $hotel->getId() ] );
+      $moyenne = $moyennestmt->fetchAll( PDO::FETCH_ASSOC );
+var_dump($moyenne);
+      $countstmt=$this->getDB()->prepare("SELECT Count(*) FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'");
+      $countstmt->execute( [ 'hotelId' => $hotel->getId() ] );
+      $conteur = $countstmt->fetchAll( PDO::FETCH_ASSOC );
+     // var_dump($moyenne[0]);
     $output = [
-      'rating' => round( array_sum( $reviews ) / count( $reviews ) ),
-      'count' => count( $reviews ),
+      'rating' =>  $moyenne[0][1],
+      'count' => $conteur[0],
     ];
       $this->t->endTimer("timer3",$id);
     return $output;
