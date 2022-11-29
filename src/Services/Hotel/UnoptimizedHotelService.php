@@ -110,21 +110,24 @@ class UnoptimizedHotelService extends AbstractHotelService {
     $reviews = $stmt->fetchAll( PDO::FETCH_ASSOC );
     
     // Sur les lignes, ne garde que la note de l'avis
+/*
     $reviews = array_map( function ( $review ) {
       return intval( $review['meta_value'] );
     }, $reviews );
+*/
 
-      $moyennestmt=$this->getDB()->prepare("SELECT round(AVG(meta_value))  FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'");
+
+      $moyennestmt=$this->getDB()->prepare("SELECT round(AVG(meta_value)) as rat  FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'");
       $moyennestmt->execute( [ 'hotelId' => $hotel->getId() ] );
       $moyenne = $moyennestmt->fetchAll( PDO::FETCH_ASSOC );
-var_dump($moyenne);
-      $countstmt=$this->getDB()->prepare("SELECT Count(*) FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'");
+//var_dump($moyenne);
+      $countstmt=$this->getDB()->prepare("SELECT Count(*) as cou  FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'");
       $countstmt->execute( [ 'hotelId' => $hotel->getId() ] );
       $conteur = $countstmt->fetchAll( PDO::FETCH_ASSOC );
-     // var_dump($moyenne[0]);
+
     $output = [
-      'rating' =>  $moyenne[0][1],
-      'count' => $conteur[0],
+      'rating' =>  $moyenne[0]['rat'],
+      'count' => $conteur[0]['cou'],
     ];
       $this->t->endTimer("timer3",$id);
     return $output;
