@@ -34,9 +34,9 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @noinspection PhpUnnecessaryLocalVariableInspection
    */
   protected function getDB () : PDO {
-      $id= $this->t->startTimer("timer4");
+      $id= $this->t->startTimer("getBD");
       $pdo=$this->db=Database::get();
-      $this->t->endTimer("timer4",$id);
+      $this->t->endTimer("getBD",$id);
     return $pdo;
   }
   
@@ -50,7 +50,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @return string|null
    */
   protected function getMeta ( int $userId, string $key ) : ?string {
-      $id= $this->t->startTimer("timer1");
+      $id= $this->t->startTimer("getMeta");
     $db = $this->getDB();
     $stmt = $db->prepare( "SELECT * FROM wp_usermeta" );
     $stmt->execute();
@@ -61,7 +61,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
       if ( $row['user_id'] === $userId && $row['meta_key'] === $key )
         $output = $row['meta_value'];
     }
-      $this->t->endTimer("timer1",$id);
+      $this->t->endTimer("getMeta",$id);
     return $output;
   }
   
@@ -75,7 +75,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @noinspection PhpUnnecessaryLocalVariableInspection
    */
   protected function getMetas ( HotelEntity $hotel ) : array {
-      $id= $this->t->startTimer("timer2");
+      $id= $this->t->startTimer("getMetas");
       $metaDatas = [
       'address' => [
         'address_1' => $this->getMeta( $hotel->getId(), 'address_1' ),
@@ -89,7 +89,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
       'coverImage' =>  $this->getMeta( $hotel->getId(), 'coverImage' ),
       'phone' =>  $this->getMeta( $hotel->getId(), 'phone' ),
     ];
-      $this->t->endTimer("timer2",$id );
+      $this->t->endTimer("getMetas",$id );
     return $metaDatas;
   }
   
@@ -103,11 +103,11 @@ class UnoptimizedHotelService extends AbstractHotelService {
    * @noinspection PhpUnnecessaryLocalVariableInspection
    */
   protected function getReviews ( HotelEntity $hotel ) : array {
-      $id=$this->t->startTimer("timer3");
+      $id=$this->t->startTimer("getReviews");
     // Récupère tous les avis d'un hotel
-    $stmt = $this->getDB()->prepare( "SELECT * FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'" );
-    $stmt->execute( [ 'hotelId' => $hotel->getId() ] );
-    $reviews = $stmt->fetchAll( PDO::FETCH_ASSOC );
+    /*$stmt = $this->getDB()->prepare( "SELECT * FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'" );
+    $stmt->execute( [ 'hotelId' => $hotel->getId() ] );*/
+    //$reviews = $stmt->fetchAll( PDO::FETCH_ASSOC );
     
     // Sur les lignes, ne garde que la note de l'avis
 /*
@@ -129,7 +129,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
       'rating' =>  $moyenne[0]['rat'],
       'count' => $conteur[0]['cou'],
     ];
-      $this->t->endTimer("timer3",$id);
+      $this->t->endTimer("getReviews",$id);
     return $output;
   }
   
@@ -155,38 +155,24 @@ class UnoptimizedHotelService extends AbstractHotelService {
   protected function getCheapestRoom ( HotelEntity $hotel, array $args = [] ) : RoomEntity {
     // On charge toutes les chambres de l'hôtel
 
-    $stmt = $this->getDB()->prepare( "SELECT * FROM wp_posts WHERE post_author = :hotelId AND post_type = 'room'" );
-    $stmt->execute( [ 'hotelId' => $hotel->getId() ] );
-    
-    /**
-     * On convertit les lignes en instances de chambres (au passage ça charge toutes les données).
-     *
-     * @var RoomEntity[] $rooms ;
-     */
-    $rooms = array_map( function ( $row ) {
-      return $this->getRoomService()->get( $row['ID'] );
-    }, $stmt->fetchAll( PDO::FETCH_ASSOC ) );
+      $id=$this->t->startTimer("getCheapestRoom");
     
     // On exclut les chambres qui ne correspondent pas aux critères
     $filteredRooms = [];
     $query="SELECT
     user.ID            AS id,
-    user.display_name  AS name,
-    latData.meta_value AS lat,
-    lngData.meta_value AS lng,
-    prix.meta_value AS prix,
-    surface.meta_value AS surface,
-    rooms.meta_value AS rooms,
-    bathroom.meta_value AS bathroomtroom,
-    type.meta_value AS type
+    
+    Min(CAST(prix.meta_value AS unsigned)) AS prix,
+    CAST(surface.meta_value AS unsigned) AS surface,
+    CAST(rooms.meta_value AS unsigned) AS rooms,
+    CAST(bathroom.meta_value AS unsigned) AS bathroom,
+    type.meta_value AS type,
+    user.post_title AS title,
+    coverimage.meta_value AS coverimage
+    
 FROM
-    wp_users AS USER
-    -- geo lat
-    INNER JOIN tp.wp_usermeta AS latData 
-        ON latData.user_id = user.ID AND latData.meta_key = 'geo_lat'
-    -- geo lng
-    INNER JOIN tp.wp_usermeta AS lngData 
-        ON lngData.user_id = user.ID AND lngData.meta_key = 'geo_lng'
+    wp_posts AS USER
+   
     INNER Join wp_postmeta AS prix 
     ON prix.post_id=user.ID AND prix.meta_key='price'
     INNER Join wp_postmeta AS surface 
@@ -196,7 +182,10 @@ FROM
     INNER Join wp_postmeta AS bathroom
     ON bathroom.post_id=user.ID AND bathroom.meta_key='bathrooms_count'
     INNER Join wp_postmeta AS type
-    ON type.post_id=user.ID AND type.meta_key='type'";
+    ON type.post_id=user.ID AND type.meta_key='type'
+    
+    INNER Join wp_postmeta AS coverimage
+    ON coverimage.post_id=user.ID AND coverimage.meta_key='coverImage'";
     /*
     foreach ( $rooms as $room ) {
       if ( isset( $args['surface']['min'] ) && $room->getSurface() < $args['surface']['min'] )
@@ -246,15 +235,15 @@ FROM
               //bathroom.meta_value
                $whereClauses[] = 'bathroom.meta_value>= :bathrom';
 
-          if ( isset( $args['types'] ) && ! empty( $args['types'] ))
-              $whereClauses[] = 'in_array(type,:typess)';
-
+//          if ( isset( $args['types'] ) && ! empty( $args['types'] ))
+//              $whereClauses[] = 'in_array(type,:typess)';
+          $whereClauses[]='post_author =:auteur';
       if ( count($whereClauses) > 0 ) {
           $query .= " WHERE " . implode(' AND ', $whereClauses);
       }
 // On récupère le PDOStatement
       $stmt = $this->getDB()->prepare( $query );
-
+        $id=$hotel->getId();
 // On associe les placeholder aux valeurs de $args,
 // on doit le faire ici, car nous n'avions pas accès au $stmt avant
       if ( isset( $args['surface']['min'] ) )
@@ -269,24 +258,45 @@ FROM
           $stmt->bindParam('room', $args['rooms'], PDO::PARAM_INT);
       if ( isset( $args['bathRooms'] ) )
           $stmt->bindParam('bathrom', $args['bathRooms'], PDO::PARAM_INT);
-      if ( isset( $args['types'] ) && ! empty( $args['types'] )  )
-          $stmt->bindParam('typess', $args['types'], PDO::PARAM_STR);
+      $stmt->bindParam('auteur',$id,PDO::PARAM_INT);
+      //if ( isset( $args['types'] ) && ! empty( $args['types'] )  )
+        //  $stmt->bindParam('typess', $args['types']);
 
       $stmt->execute();
+      //dump($stmt->queryString);
       //$stmt->fetchAll();
-      $resultat=$stmt->fetchAll();
+      $resultat=$stmt->fetch();
+
           //$filteredRooms[] = $room;
-        var_dump($resultat[4]);
+        //var_dump($resultat[0][2]);
     
     // Si aucune chambre ne correspond aux critères, alors on déclenche une exception pour retirer l'hôtel des résultats finaux de la méthode list().
    // if ( count( $filteredRooms ) < 1 )
       if ( count( $resultat ) < 1 ) {
           throw new FilterException("Aucune chambre ne correspond aux critères");
       }
-    
+    //$cheapestRooms=new RoomEntity();
+
+        $price=$resultat["prix"];
+        $bathroomcount=$resultat["bathroom"];
+        $bedroomcount=$resultat["rooms"];
+        $title=$resultat["title"];
+        $image=$resultat["coverimage"];
+        $surface=$resultat["surface"];
+      $type=$resultat["type"];
+      $cheapestRoom=new RoomEntity();
+      $cheapestRoom->setPrice($price);
+      $cheapestRoom->setBathRoomsCount(($bathroomcount));
+      $cheapestRoom->setBedRoomsCount(($bedroomcount));
+      $cheapestRoom->setTitle($title);
+      $cheapestRoom->setCoverImageUrl($image);
+      $cheapestRoom->setSurface($surface);
+      $cheapestRoom->setType($type);
+
+
     
     // Trouve le prix le plus bas dans les résultats de recherche
-
+/*
     $cheapestRoom = null;
     foreach ( $filteredRooms as $room ) :
       if ( ! isset( $cheapestRoom ) ) {
@@ -297,9 +307,10 @@ FROM
       if ( intval( $room->getPrice() ) < intval( $cheapestRoom->getPrice() ) )
         $cheapestRoom = $room;
     endforeach;
+*/
 
 
-
+      $this->t->endTimer("getCheapestRoom",$id);
 
     return $cheapestRoom;
   }
@@ -363,7 +374,8 @@ FROM
       if ( $hotel->getDistance() > $args['distance'] )
         throw new FilterException( "L'hôtel est en dehors du rayon de recherche" );
     }
-    
+      /*header('Server-Timing: ' . Timers::getInstance()->getTimers() );
+    die();*/
     return $hotel;
   }
   
