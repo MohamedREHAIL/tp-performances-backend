@@ -33,50 +33,75 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 - **Après** TEMPS
 
 
-#### Amélioration de la méthode `METHOD` et donc de la méthode `METHOD` :
+#### Amélioration de la méthode `getMeta` et donc de la méthode `getMetas` :
 
 - **Avant** TEMPS
 
 ```sql
--- REQ SQL DE BASE
+ SELECT * FROM wp_usermeta
 ```
 
 - **Après** TEMPS
 
 ```sql
--- NOUVELLE REQ SQL
+SELECT meta_value  FROM wp_usermeta where user_id=:userID AND meta_key=:Key
 ```
 
 
 
-#### Amélioration de la méthode `METHOD` :
+#### Amélioration de la méthode `getReviews` :
 
 - **Avant** TEMPS
 
 ```sql
--- REQ SQL DE BASE
+SELECT * FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'
 ```
 
 - **Après** TEMPS
 
 ```sql
--- NOUVELLE REQ SQL
+SELECT Count(meta_value)as cou,round(AVG(meta_value)) as rat  FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'
 ```
 
 
 
-#### Amélioration de la méthode `METHOD` :
+#### Amélioration de la méthode `getCheapestRoom` :
 
 - **Avant** TEMPS
 
 ```sql
--- REQ SQL DE BASE
+SELECT * FROM wp_posts WHERE post_author = :hotelId AND post_type = 'room'
 ```
 
 - **Après** TEMPS
 
 ```sql
--- NOUVELLE REQ SQL
+SELECT
+ user.ID AS id,
+ Min(CAST(prix.meta_value AS unsigned)) AS prix,
+ CAST(surface.meta_value AS unsigned) AS surface,
+ CAST(rooms.meta_value AS unsigned) AS rooms,
+ CAST(bathroom.meta_value AS unsigned) AS bathroom,
+ type.meta_value AS type,
+ user.post_title AS title,
+ coverimage.meta_value AS coverimage
+
+FROM
+ wp_posts AS USER
+   
+    INNER Join wp_postmeta AS prix
+ON prix.post_id=user.ID AND prix.meta_key='price'
+ INNER Join wp_postmeta AS surface
+ ON surface.post_id=user.ID AND surface.meta_key='surface'
+ INNER Join wp_postmeta AS rooms
+ ON rooms.post_id=user.ID AND rooms.meta_key='bedrooms_count'
+ INNER Join wp_postmeta AS bathroom
+ ON bathroom.post_id=user.ID AND bathroom.meta_key='bathrooms_count'
+ INNER Join wp_postmeta AS type
+ ON type.post_id=user.ID AND type.meta_key='type'
+
+ INNER Join wp_postmeta AS coverimage
+ ON coverimage.post_id=user.ID AND coverimage.meta_key='coverImage'
 ```
 
 
