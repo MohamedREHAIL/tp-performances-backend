@@ -144,36 +144,43 @@ class UnoptimizedHotelService extends AbstractHotelService {
       $id2= $this->t->startTimer("getCheapestRoom");
 
     $query="SELECT
-    user.ID AS id,
-    Min(CAST(prix.meta_value AS unsigned)) AS prix,
-    CAST(surface.meta_value AS unsigned) AS surface,
-    CAST(rooms.meta_value AS unsigned) AS rooms,
-    CAST(bathroom.meta_value AS unsigned) AS bathroom,
-    type.meta_value AS type,
-    user.post_title AS title,
-    coverimage.meta_value AS coverimage
-    
-FROM
-    wp_posts AS USER
-   
-    INNER Join wp_postmeta AS prix 
-    ON prix.post_id=user.ID AND prix.meta_key='price'
-    INNER Join wp_postmeta AS surface 
-    ON surface.post_id=user.ID AND surface.meta_key='surface'
-    INNER Join wp_postmeta AS rooms
-    ON rooms.post_id=user.ID AND rooms.meta_key='bedrooms_count'
-    INNER Join wp_postmeta AS bathroom
-    ON bathroom.post_id=user.ID AND bathroom.meta_key='bathrooms_count'
-    INNER Join wp_postmeta AS type
-    ON type.post_id=user.ID AND type.meta_key='type'
-    
-    INNER Join wp_postmeta AS coverimage
-    ON coverimage.post_id=user.ID AND coverimage.meta_key='coverImage'
-    ";
+ user.ID AS id,
+ CAST(prix.meta_value AS unsigned) AS prix,
+ CAST(surface.meta_value AS unsigned) AS surface,
+ CAST(rooms.meta_value AS unsigned) AS rooms,
+ CAST(bathroom.meta_value AS unsigned) AS bathroom,
+ type.meta_value AS type,
+ user.post_title AS title,
+ coverimage.meta_value AS coverimage
 
+
+
+FROM
+ wp_posts AS USER
+   
+    INNER Join wp_postmeta AS prix
+ON prix.post_id=user.ID AND prix.meta_key='price'
+ INNER Join wp_postmeta AS surface
+ ON surface.post_id=user.ID AND surface.meta_key='surface'
+ INNER Join wp_postmeta AS rooms
+ ON rooms.post_id=user.ID AND rooms.meta_key='bedrooms_count'
+ INNER Join wp_postmeta AS bathroom
+ ON bathroom.post_id=user.ID AND bathroom.meta_key='bathrooms_count'
+ INNER Join wp_postmeta AS type
+ ON type.post_id=user.ID AND type.meta_key='type'
+
+ INNER Join wp_postmeta AS coverimage
+ ON coverimage.post_id=user.ID AND coverimage.meta_key='coverImage'
+
+ 
+    ";
+      $id=$hotel->getId();
       $whereClauses = [];
 
-            $whereClauses[]='user.post_author =:auteur';
+             //$whereClauses[]=' user.post_type =:room';
+          if(isset($id))
+
+              $whereClauses[]='user.post_author =:auteur';
           if ( isset( $args['surface']['min'] )  )
 
               $whereClauses[] = 'surface.meta_value >= :min';
@@ -201,13 +208,16 @@ FROM
           $query .= " WHERE " . implode(' AND ', $whereClauses);
       }
 // On récupère le PDOStatement
-      $id=$hotel->getId();
+
+      $room='room';
       $stmt = $this->getDB()->prepare( $query );
 
 
 // On associe les placeholder aux valeurs de $args,
 // on doit le faire ici, car nous n'avions pas accès au $stmt avant
-      $stmt->bindParam('auteur',$id,PDO::PARAM_INT);
+        // $stmt->bindParam('room',$room,PDO::PARAM_STR);
+
+       $stmt->bindParam('auteur',$id,PDO::PARAM_INT);
       if ( isset( $args['surface']['min'] ) )
           $stmt->bindParam('min', $args['surface']['min'], PDO::PARAM_INT);
       if ( isset( $args['surface']['max'] ) )
@@ -224,6 +234,7 @@ FROM
 
       $stmt->execute();
       $resultats=$stmt->fetchAll();
+     // dump($resultats);
 
     
     // Si aucune chambre ne correspond aux critères, alors on déclenche une exception pour retirer l'hôtel des résultats finaux de la méthode list().

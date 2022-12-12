@@ -28,20 +28,20 @@ Vous pouvez utiliser ce [GSheets](https://docs.google.com/spreadsheets/d/13Hw27U
 
 **Temps de chargement globaux** 
 
-- **Avant** TEMPS
+- **Avant** 28,70
 
-- **Après** TEMPS
+- **Après** 21,21
 
 
 #### Amélioration de la méthode `getMeta` et donc de la méthode `getMetas` :
 
-- **Avant** TEMPS
+- **Avant** 4,45
 
 ```sql
  SELECT * FROM wp_usermeta
 ```
 
-- **Après** TEMPS
+- **Après** 1,57
 
 ```sql
 SELECT meta_value  FROM wp_usermeta where user_id=:userID AND meta_key=:Key
@@ -51,13 +51,13 @@ SELECT meta_value  FROM wp_usermeta where user_id=:userID AND meta_key=:Key
 
 #### Amélioration de la méthode `getReviews` :
 
-- **Avant** TEMPS
+- **Avant** 9,11
 
 ```sql
 SELECT * FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'
 ```
 
-- **Après** TEMPS
+- **Après** 6,81
 
 ```sql
 SELECT Count(meta_value)as cou,round(AVG(meta_value)) as rat  FROM wp_posts, wp_postmeta WHERE wp_posts.post_author = :hotelId AND wp_posts.ID = wp_postmeta.post_id AND meta_key = 'rating' AND post_type = 'review'
@@ -67,15 +67,16 @@ SELECT Count(meta_value)as cou,round(AVG(meta_value)) as rat  FROM wp_posts, wp_
 
 #### Amélioration de la méthode `getCheapestRoom` :
 
-- **Avant** TEMPS
+- **Avant** 17,40
 
 ```sql
 SELECT * FROM wp_posts WHERE post_author = :hotelId AND post_type = 'room'
 ```
 
-- **Après** TEMPS
+- **Après** 12,65
 
 ```sql
+
 SELECT
  user.ID AS id,
  Min(CAST(prix.meta_value AS unsigned)) AS prix,
@@ -85,6 +86,8 @@ SELECT
  type.meta_value AS type,
  user.post_title AS title,
  coverimage.meta_value AS coverimage
+
+
 
 FROM
  wp_posts AS USER
@@ -102,6 +105,10 @@ ON prix.post_id=user.ID AND prix.meta_key='price'
 
  INNER Join wp_postmeta AS coverimage
  ON coverimage.post_id=user.ID AND coverimage.meta_key='coverImage'
+
+
+
+Where  surface.meta_value >= 100 AND surface.meta_value <= 150  AND prix.meta_value >= 100 AND prix.meta_value <= 300  AND rooms.meta_value  >= 5 AND bathroom.meta_value >= 4 AND type.meta_value IN ("Maison","Appartement");
 ```
 
 
