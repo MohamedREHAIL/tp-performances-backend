@@ -49,19 +49,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
    *
    * @return string|null
    */
-  protected function getMeta ( int $userId, string $key ) : ?string {
-      $id= $this->t->startTimer("getMeta");
 
-      $stmt = $this->getDB()->prepare( "SELECT meta_value  FROM wp_usermeta where user_id=:userID AND meta_key=:Key " );
-      $stmt->execute([
-          'userID'=>$userId,
-          'Key'=>$key
-      ]);
-      $result = $stmt->fetchAll( PDO::FETCH_ASSOC );
-      $output=($result[0]["meta_value"]);
-      $this->t->endTimer("getMeta",$id);
-    return $output;
-  }
   
   
   /**
@@ -74,19 +62,22 @@ class UnoptimizedHotelService extends AbstractHotelService {
    */
   protected function getMetas ( HotelEntity $hotel ) : array {
       $id= $this->t->startTimer("getMetas");
-      $stmt = $this->getDB()->prepare( "SELECT meta_value  FROM wp_usermeta where user_id=:userID AND meta_key=:Key " );
+      $stmt = $this->getDB()->prepare( "SELECT meta_value ,meta_key from wp_usermeta where user_id=:id; " );
+      $stmt->execute(['id'=>$hotel->getId()]);
+      $getMeta=$stmt->fetchAll();
+     
       $metaDatas = [
       'address' => [
-        'address_1' => $this->getMeta( $hotel->getId(), 'address_1' ),
-        'address_2' => $this->getMeta( $hotel->getId(), 'address_2' ),
-        'address_city' => $this->getMeta( $hotel->getId(), 'address_city' ),
-        'address_zip' => $this->getMeta( $hotel->getId(), 'address_zip' ),
-        'address_country' => $this->getMeta( $hotel->getId(), 'address_country' ),
+        'address_1' => $getMeta[0][0],
+        'address_2' => $getMeta[1][0],
+        'address_city' => $getMeta[2][0],
+        'address_zip' => $getMeta[3][0],
+        'address_country' => $getMeta[4][0],
       ],
-      'geo_lat' =>  $this->getMeta( $hotel->getId(), 'geo_lat' ),
-      'geo_lng' =>  $this->getMeta( $hotel->getId(), 'geo_lng' ),
-      'coverImage' =>  $this->getMeta( $hotel->getId(), 'coverImage' ),
-      'phone' =>  $this->getMeta( $hotel->getId(), 'phone' ),
+      'geo_lat' =>  $getMeta[5][0],
+      'geo_lng' =>  $getMeta[6][0],
+      'coverImage' =>  $getMeta[9][0],
+      'phone' =>  $getMeta[7][0],
     ];
       $this->t->endTimer("getMetas",$id );
     return $metaDatas;

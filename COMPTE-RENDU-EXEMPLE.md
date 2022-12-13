@@ -117,8 +117,8 @@ Where  surface.meta_value >= 100 AND surface.meta_value <= 150  AND prix.meta_va
 
 |                              | **Avant** | **Après** |
 |------------------------------|-----------|-----------|
-| Nombre d'appels de `getDB()` | NOMBRE    | NOMBRE    |
- | Temps de `METHOD`            | TEMPS     | TEMPS     |
+| Nombre d'appels de `getDB()` | 2201      | 601       |
+ | Temps de `METHOD`            | 3.64 ms   | 1.17ms    |
 
 ## Question 6 : Création d'un service basé sur une seule requête SQL
 
