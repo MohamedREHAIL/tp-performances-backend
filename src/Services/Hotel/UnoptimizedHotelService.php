@@ -145,13 +145,15 @@ class UnoptimizedHotelService extends AbstractHotelService {
 
     $query="SELECT
  user.ID AS id,
- CAST(prix.meta_value AS unsigned) AS prix,
+ Min(CAST(prix.meta_value AS unsigned)) AS prix,
  CAST(surface.meta_value AS unsigned) AS surface,
  CAST(rooms.meta_value AS unsigned) AS rooms,
  CAST(bathroom.meta_value AS unsigned) AS bathroom,
  type.meta_value AS type,
  user.post_title AS title,
  coverimage.meta_value AS coverimage
+ 
+ 
 
 
 
@@ -170,7 +172,12 @@ ON prix.post_id=user.ID AND prix.meta_key='price'
  ON type.post_id=user.ID AND type.meta_key='type'
 
  INNER Join wp_postmeta AS coverimage
- ON coverimage.post_id=user.ID AND coverimage.meta_key='coverImage'
+ ON coverimage.post_id=user.ID AND coverimage.meta_key='coverImage' 
+
+
+
+
+ 
 
  
     ";
@@ -205,8 +212,11 @@ ON prix.post_id=user.ID AND prix.meta_key='price'
 
 
       if ( count($whereClauses) > 0 ) {
-          $query .= " WHERE " . implode(' AND ', $whereClauses);
+          $query .= " WHERE " . implode(' AND ', $whereClauses );
+          $query .=" GROUP by user.post_author";
+
       }
+
 // On récupère le PDOStatement
 
       $room='room';
@@ -230,6 +240,7 @@ ON prix.post_id=user.ID AND prix.meta_key='price'
           $stmt->bindParam('room', $args['rooms'], PDO::PARAM_INT);
       if ( isset( $args['bathRooms'] ) )
           $stmt->bindParam('bathroom', $args['bathRooms'], PDO::PARAM_INT);
+
 
 
       $stmt->execute();

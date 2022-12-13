@@ -108,7 +108,7 @@ ON prix.post_id=user.ID AND prix.meta_key='price'
 
 
 
-Where  surface.meta_value >= 100 AND surface.meta_value <= 150  AND prix.meta_value >= 100 AND prix.meta_value <= 300  AND rooms.meta_value  >= 5 AND bathroom.meta_value >= 4 AND type.meta_value IN ("Maison","Appartement");
+Where  surface.meta_value >= 100 AND surface.meta_value <= 150  AND prix.meta_value >= 100 AND prix.meta_value <= 300  AND rooms.meta_value  >= 5 AND bathroom.meta_value >= 4 AND type.meta_value IN ("Maison","Appartement") Group By user.post_author;
 ```
 
 
