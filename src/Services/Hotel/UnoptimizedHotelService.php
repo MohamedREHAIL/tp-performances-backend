@@ -145,6 +145,7 @@ class UnoptimizedHotelService extends AbstractHotelService {
  coverimage.meta_value AS coverimage
  
  
+ 
 
 
 
@@ -204,9 +205,11 @@ ON prix.post_id=user.ID AND prix.meta_key='price'
 
       if ( count($whereClauses) > 0 ) {
           $query .= " WHERE " . implode(' AND ', $whereClauses );
+
           $query .=" GROUP by user.post_author";
 
       }
+
 
 // On récupère le PDOStatement
 
