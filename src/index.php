@@ -15,6 +15,6 @@ require_once __DIR__ . "/vendor/autoload.php";
 //$hotelService = UnoptimizedHotelService::getInstance();
 //$hotelService=OneRequestHotelService::getInstance();
 $hotelService=ReworkedHotelService::getInstance();
-Cache::get()->getItem('any_item');
+//Cache::get()->getItem('any_item');
 $controller = new HotelListController( $hotelService );
 $controller->render();

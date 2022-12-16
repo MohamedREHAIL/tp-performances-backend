@@ -35,7 +35,8 @@ class ReworkedHotelService extends OneRequestHotelService
     {
         parent::__construct();
       //  $this->t = Timers::getInstance();
-        $this->Api=new ApiReviewsService("http://cheap-trusted-reviews.fake/");
+        //$this->Api=new ApiReviewsService("http://cheap-trusted-reviews.fake/");
+        $this->Api=new Reviews\CachedApiReviewService("http://cheap-trusted-reviews.fake/");
     }
 
     public function convertEntityFromArray(array $args): HotelEntity
