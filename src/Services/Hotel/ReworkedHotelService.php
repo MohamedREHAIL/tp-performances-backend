@@ -2,20 +2,26 @@
 
 namespace App\Services\Hotel;
 
+
+
 use App\Common\Database;
 use App\Common\FilterException;
 use App\Common\SingletonTrait;
 use App\Common\Timers;
 use App\Entities\HotelEntity;
 use App\Entities\RoomEntity;
+
+use App\Services\Reviews\ApiReviewsService;
 use App\Services\Room\RoomService;
+use App\Services\Reviews;
+
 use Exception;
 use PDO;
 use PDOStatement;
 
 
 
-class ReworkedHotelService extends AbstractHotelService
+class ReworkedHotelService extends OneRequestHotelService
 {
 
 
@@ -24,16 +30,20 @@ class ReworkedHotelService extends AbstractHotelService
 
     public Timers $t;
     private PDO $db;
-
+    public ApiReviewsService $Api;
     protected function __construct()
     {
-        parent::__construct(new RoomService());
-        $this->t = Timers::getInstance();
+        parent::__construct();
+      //  $this->t = Timers::getInstance();
+        $this->Api=new ApiReviewsService("http://cheap-trusted-reviews.fake/");
     }
 
     public function convertEntityFromArray(array $args): HotelEntity
     {
+
         $id = $this->t->startTimer("convertEntityFromArray");
+        $Apireview=$this->Api->get($args['IDHotel']);
+//var_dump($Apireview);
         $Hotel = (new HotelEntity())
             ->setId($args['IDHotel'])
             ->setName($args['HotelName'])
@@ -47,8 +57,6 @@ class ReworkedHotelService extends AbstractHotelService
             ->setGeoLat($args['geo_lat'])
             ->setGeoLng($args['geo_lng'])
             ->setImageUrl($args['coverImage'])
-            ->setRatingCount($args['Counts'])
-            ->setRating((int)($args['AVGs']))
             ->setPhone($args['phone'])
             ->setCheapestRoom(
                 (new RoomEntity())
@@ -62,7 +70,14 @@ class ReworkedHotelService extends AbstractHotelService
                     ->setType($args['type'])
 
 
-            );
+            )
+
+
+        ->setRating(round($Apireview["data"]["rating"]))
+        ->setRatingCount($Apireview["data"]["count"]);
+
+
+
 
 
         $this->t->endTimer("convertEntityFromArray", $id);
