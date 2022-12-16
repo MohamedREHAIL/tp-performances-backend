@@ -406,7 +406,7 @@ ALTER TABLE `reviews` ADD INDEX(`IDHotel`);
 
 | Sans Cache | Avec Cache |
 |------------|------------|
-| TEMPS      | TEMPS      |
+| TEMPS      | 1,26 s     |
 [URL pour ignorer le cache sur localhost](http://localhost?skip_cache)
 
 ## Question 14 : Compression GZIP
